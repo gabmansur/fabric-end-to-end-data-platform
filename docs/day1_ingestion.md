@@ -30,6 +30,7 @@ This maps to **DP-700: Ingest and Transform Data** skills.
   4. Export pipeline JSON to `pipelines/` folder.
 
 ### 2. Batch Ingestion – Public API
+[Detailed build steps for Weather Dataflow](../01_ingestion/dataflows_gen2/docs/README.md)
 - **Data:** OpenWeather API (sample city weather)  
 - **Fabric Tool:** Dataflow Gen2 (or notebook for more control)  
 - **Bronze Layer Target:** Lakehouse table `bronze_weather`  
