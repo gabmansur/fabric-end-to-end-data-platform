@@ -3,19 +3,25 @@
 **What & Why**  
 Business-ready layer exposed via SQL views. Today these views run on the **Lakehouse SQL endpoint** (Direct Lake). This folder also leaves space to add a dedicated **Fabric Warehouse** later without changing repo structure.
 
-**Artifacts**
+---
+
+## Artifacts
 - `lakehouse_sql/VW_Weather_Readings.sql` – one row per API call
 - `lakehouse_sql/VW_Weather_Hourly.sql` – hourly aggregates
 - `lakehouse_sql/VW_Weather_Daily.sql` – daily aggregates (optional)
 
-**How to Deploy (Lakehouse SQL)**
+---
+
+## How to Deploy (Lakehouse SQL)
 1. Open the Lakehouse **SQL analytics endpoint** for `LH_Weather`.
-2. Run the view scripts from `lakehouse_sql/*.sql` (each in its own batch).
+2. Run the view scripts from `lakehouse_sql/*.sql` (**each in its own batch**).
 3. Validate:
    ```sql
    SELECT TOP 10 * FROM dbo.VW_Weather_Readings ORDER BY ts_utc DESC;
    SELECT TOP 10 * FROM dbo.VW_Weather_Hourly   ORDER BY hour_start_utc DESC;
-    ```
+   ```
+
+---
 
 ## (Optional) Future: Fabric Warehouse
 
@@ -82,6 +88,8 @@ GROUP BY
 - **Governance nuance**: fine-grained Warehouse storage policies don’t apply when data isn’t materialized there.
 - **Performance edge cases**: very heavy workloads may prefer materializing into Warehouse for isolation.
 
+---
+
 ## 2) Optional: Materialize into the Warehouse (copy data)
 
 Load curated Silver into native Warehouse tables (for isolation or performance testing).
@@ -143,11 +151,13 @@ FROM dbo.silver_weather_w
 GROUP BY name, DATEADD(hour, DATEDIFF(hour, 0, [timestamp]), 0);
 ```
 
-### Power BI hookup
+---
+
+## Power BI hookup
 
 **Goal:** expose your Gold views to Power BI using **Direct Lake** for low-latency analytics.
 
-#### Option A — Lakehouse SQL endpoint (current setup)
+### Option A — Lakehouse SQL endpoint (current setup)
 1. Open **Power BI Desktop** → **Get data** → **Power Platform** → **Power BI datasets** (or **Fabric / OneLake data hub**).
 2. Select your workspace → **Lakehouse** (`LH_Weather`) → **SQL endpoint**.
 3. Choose the views (e.g., `dbo.VW_Weather_Readings`, `dbo.VW_Weather_Hourly`).
@@ -155,12 +165,12 @@ GROUP BY name, DATEADD(hour, DATEDIFF(hour, 0, [timestamp]), 0);
    - If Desktop shows **DirectQuery/Import**, back out and pick the **SQL endpoint** from the **OneLake data hub** picker.
 5. Build visuals, then **Publish** to the same workspace.
 
-#### Option B — Fabric Warehouse (shortcut or materialized)
+### Option B — Fabric Warehouse (shortcut or materialized)
 1. In Desktop → **Get data** → **Fabric** (or **OneLake data hub**) → pick **Warehouse** (`WH_Weather`).
 2. Select views (same names recommended: `VW_Weather_Readings`, `VW_Weather_Hourly`).
 3. Model runs in **Direct Lake** by default for Fabric Warehouse.
 
-#### Quick visual starter
+### Quick visual starter
 - **Slicer**: `city_name`
 - **Line chart**: `hour_start_utc` (X) vs `avg_temp_c` (Y) from `VW_Weather_Hourly`
 - **Card** (latest reading):
@@ -170,9 +180,21 @@ GROUP BY name, DATEADD(hour, DATEDIFF(hour, 0, [timestamp]), 0);
   RETURN
     CALCULATE ( MAX ( VW_Weather_Readings[temp] ), VW_Weather_Readings[ts_utc] = tMax )
   ```
-
-  - **Card**: “Last Observation (UTC)”  
-  Measure:
+- **Card**: “Last Observation (UTC)”  
   ```DAX
   Last Observation (UTC) =
   MAX ( VW_Weather_Readings[ts_utc] )
+  ```
+
+### Refresh & latency
+- **Direct Lake** models don’t require scheduled dataset refresh; freshness follows your **pipeline + dataflow** cadence.
+- If you use **materialized Warehouse tables**, schedule their load **after** the Silver dataflow completes.
+
+### Security (optional)
+- Keep views in `dbo` but grant **SELECT** only to a business/reader role.
+- Implement RLS in the **semantic model** (preferred) or via **row-filtered views** (e.g., filter by `city_name`).
+
+### Gotchas
+- Direct Lake supports tabular-friendly types only — avoid Binary/Record/List columns in views.
+- `CREATE VIEW` must exist before Desktop connects; re-open the connection if you add new views.
+- Time zone: views use **UTC**; convert in DAX or expose a local-time view if required.
