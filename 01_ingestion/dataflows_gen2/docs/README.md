@@ -1,45 +1,37 @@
-# Dataflow Gen2 – Weather API to Lakehouse
+# 01 — Ingestion (Bronze)
 
-**Goal:** Ingest and transform weather data from the OpenWeather API into the Bronze layer of the Lakehouse.
+**What & Why**  
+Pull raw data into the Lakehouse **as-is** (schema-on-read) to keep ingestion robust and auditable. We ingest OpenWeather current conditions hourly.
 
-## Overview
-- **Source:** OpenWeather API (`https://api.openweathermap.org/data/2.5/weather`)
-- **Destination:** Fabric Lakehouse – `bronze_weather`
-- **Refresh:** Hourly
-- **Purpose:** Feed clean, ready-to-use weather metrics for downstream analytics.
+**Architecture (this slice)**  
+API (HTTP) → Data Factory (**Copy**, Binary) → Lakehouse **Files**  
+`Files/bronze/raw/weather/city=amsterdam/run_date=YYYY-MM-DD/weather_YYYYMMDD_HHmmss.json`
 
-## Build Steps
-1. **Create Dataflow Gen2** in Fabric.
-2. **Connect to Source:**
-   - Connector: REST API
-   - Authentication: API key (environment variable)
-   - Endpoint example:  
-     ```
-     https://api.openweathermap.org/data/2.5/weather?q=London&appid=API_KEY
-     ```
-3. **Transform Data (Power Query):**
-   - Keep columns: `temp`, `humidity`, `timestamp`, `city`
-   - Convert timestamp to `datetime`
-   - Rename columns for consistency (snake_case)
-4. **Sink to Lakehouse:**
-   - Output table: `bronze_weather`
-   - Save in **Bronze** layer folder
-5. **Schedule Refresh:**
-   - Hourly refresh via Fabric scheduling
+**Artifacts**
+- Pipeline: `pipelines/PL_Weather_API_ToBronze.md` (params & expressions)
+- Sample JSON: `datasets/sample_weather.json` (tiny)
+- Notes: `docs/day1_ingestion.md` (gotchas + screenshots)
 
-## File Exports
-- JSON export: [`../weather_dataflow.json`](../weather_dataflow.json)
+**How to Run**
+1. Create Lakehouse `LH_Weather`.
+2. Pipeline **Copy data** (HTTP → Lakehouse Files)  
+   - Base URL: `https://api.openweathermap.org`  
+   - Relative: `/data/2.5/weather?q=Amsterdam&units=metric&appid=<API_KEY>`  
+   - **Binary copy: ON**
+3. Sink path (expressions):  
+   - Folder: `@concat('bronze/raw/weather/city=amsterdam/run_date=', formatDateTime(utcNow(),'yyyy-MM-dd'), '/')`  
+   - File:   `@concat('weather_', formatDateTime(utcNow(),'yyyyMMdd_HHmmss'), '.json')`
+4. **Debug** → verify file in Lakehouse Files.
+5. **Schedule**: every hour (or every 5 min for demo).
 
-## Validation
-- Verified row count in Lakehouse after refresh
-- Sample data query:
-```sql
-SELECT TOP 10 * 
-FROM bronze_weather
-ORDER BY timestamp DESC;
-```
+**Schedule & Monitoring**
+- Pipeline schedule: hourly; monitor in **Data Factory → Monitor** (filesWritten ≈ 1, dataWritten ≈ 0.3–1 KB).
+- Failures: check HTTP 401/429; add retry = 3, timeout = 10m.
 
-## Notes
+**Gotchas**
+- Keep **Binary** in Bronze; don’t try to parse here.
+- Never commit secrets; use placeholders in docs.
+- Case-sensitive folder names; keep `run_date=YYYY-MM-DD` consistent.
 
-- Keep API key in .env or Fabric connection credential store
-- Watch out for API call limits (free tier = 60 calls/min)
+**Next**
+Go to **02 — Lakehouse transforms (Silver)** to combine files and parse JSON with Dataflow Gen2.

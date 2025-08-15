@@ -1,0 +1,64 @@
+# ------------------------------
+# Microsoft Fabric DP-700 sandbox
+# Keep repo light: no data lake artifacts, no secrets, no local cruft
+# ------------------------------
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python / notebooks
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
+# Node / front-end (if any)
+node_modules/
+dist/
+build/
+
+# Fabric / Lakehouse & Spark leftovers
+**/_delta_log/
+**/_spark_metadata/
+**/_committed_*
+**/_started_*
+**/_SUCCESS
+**/spark-warehouse/
+**/checkpoint/
+**/checkpoints/
+**/.trash/
+**/.trashes/
+
+# Datasets: keep only tiny samples
+datasets/**
+!datasets/sample_*.json
+!datasets/README.md
+
+# Secrets & tokens (DO NOT COMMIT)
+*.env
+.env*
+*.key
+*.pem
+*.pfx
+*.crt
+*.cer
+*.der
+*.secret
+*.secrets
+*.token
+*.pbitoken
+secrets.json
+local.settings.json
+
+# Power BI (OPTIONAL): uncomment to ignore PBIX if you store them elsewhere
+# *.pbix
+# *.pbids
+
+# Logs
+*.log
+logs/
