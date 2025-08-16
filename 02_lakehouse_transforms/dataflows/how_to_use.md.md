@@ -2,7 +2,6 @@
 
 Turn Bronze JSON files into a typed Silver table (`dbo.silver_weather`) using Power Query (Dataflows Gen2).
 
----
 
 ## Prereqs
 - Lakehouse (e.g., `LH_Weather`) with Bronze files landing at:
@@ -12,7 +11,6 @@ Turn Bronze JSON files into a typed Silver table (`dbo.silver_weather`) using Po
   - `silver_weather_combined.m` (combines + parses all files)
 - Your **workspaceId** and **lakehouseId** (you can copy them from any auto-generated M after browsing to the Lakehouse once).
 
----
 
 ## Quick start (5 steps)
 
@@ -48,13 +46,12 @@ Turn Bronze JSON files into a typed Silver table (`dbo.silver_weather`) using Po
      ORDER BY [timestamp] DESC;
      ```
 
----
 
 ## Orchestration (pick one)
 - **Pipeline-driven (recommended):** In your ingest pipeline, add a **Run Dataflow** activity after the Copy (success path), **Wait for completion = On**. Then you only schedule the pipeline.
 - **Separate schedules:** Schedule the pipeline hourly; schedule the dataflow **+2–5 minutes** after the pipeline.
 
----
+
 
 ## Customize (optional)
 
@@ -69,7 +66,6 @@ Turn Bronze JSON files into a typed Silver table (`dbo.silver_weather`) using Po
 - Land Bronze into multiple `city=<name>` folders via a **ForEach** in the pipeline.
 - In Dataflow, instead of selecting a single `city=...`, expand the **`Weather`** folder’s **Content** twice (cities ➜ files) before parsing so all cities are included. Keep the `name` field from the JSON as the city label.
 
----
 
 ## Troubleshooting
 
@@ -86,7 +82,7 @@ Turn Bronze JSON files into a typed Silver table (`dbo.silver_weather`) using Po
 - **Function not found:** The parser query must be named **`fnParseOpenWeatherCurrent`** (or update the call in the combined query).
 - **Combine Files button missing (if building via UI):** You must have a column **named `Content` with Binary** values selected; expand subfolders until files are listed.
 
----
+
 
 ## What this creates
 - Lakehouse table: **`dbo.silver_weather`** (append-only, typed, with lineage `file_name` + partition `run_date`)

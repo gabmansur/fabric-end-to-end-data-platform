@@ -3,14 +3,13 @@
 **What & Why**  
 Business-ready layer exposed via SQL views. Today these views run on the **Lakehouse SQL endpoint** (Direct Lake). This folder also leaves space to add a dedicated **Fabric Warehouse** later without changing repo structure.
 
----
+
 
 ## Artifacts
 - `lakehouse_sql/VW_Weather_Readings.sql` – one row per API call
 - `lakehouse_sql/VW_Weather_Hourly.sql` – hourly aggregates
 - `lakehouse_sql/VW_Weather_Daily.sql` – daily aggregates (optional)
 
----
 
 ## How to Deploy (Lakehouse SQL)
 1. Open the Lakehouse **SQL analytics endpoint** for `LH_Weather`.
@@ -21,7 +20,7 @@ Business-ready layer exposed via SQL views. Today these views run on the **Lakeh
    SELECT TOP 10 * FROM dbo.VW_Weather_Hourly   ORDER BY hour_start_utc DESC;
    ```
 
----
+
 
 ## (Optional) Future: Fabric Warehouse
 
@@ -88,7 +87,6 @@ GROUP BY
 - **Governance nuance**: fine-grained Warehouse storage policies don’t apply when data isn’t materialized there.
 - **Performance edge cases**: very heavy workloads may prefer materializing into Warehouse for isolation.
 
----
 
 ## 2) Optional: Materialize into the Warehouse (copy data)
 
@@ -151,7 +149,6 @@ FROM dbo.silver_weather_w
 GROUP BY name, DATEADD(hour, DATEDIFF(hour, 0, [timestamp]), 0);
 ```
 
----
 
 ## Power BI hookup
 
